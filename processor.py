@@ -2,6 +2,7 @@ import csv
 from collections import deque
 
 WINDOW_SIZE = 6
+FILE_LOC = ''
 
 class Packet:
     def __init__(self, who, when, speed, hdg, lat, lon):
@@ -57,5 +58,26 @@ def init(data):
     return packets
 
 
+# Segments packets into packages of |WINDOW_SIZE|.
+def create_packages(packets):
+    packages = []
+    window = deque()
+
+    # Initial window.
+    for i in xrange(WINDOW_SIZE):
+        window.append(packets[i])
+
+    packages.append(list(window))
+
+    # Remaining windows.
+    for i in xrange(WINDOW_SIZE, len(packets)):
+        window.popleft()
+        window.append(packets[i])
+
+        packages.append(list(window))
+
+    return packages
+
+
 if __name__ == '__main__':
-    pass
+    packets = init(load_CSV(FILE_LOC))
