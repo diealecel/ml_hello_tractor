@@ -1,6 +1,32 @@
-# Added comments.
-
 import csv
+from collections import deque
+
+WINDOW_SIZE = 6
+
+class Packet:
+    def __init__(self, who, when, speed, hdg, lat, lon):
+        self.__who = who
+        self.__when = when
+        self.__speed = speed
+        self.__hdg = hdg
+        self.__lat = lat
+        self.__lon = lon
+
+    def who(self):
+        return self.__who
+
+    def when(self):
+        return self.__when
+
+    def get_speed(self):
+        return self.__speed
+
+    def get_hdg(self):
+        return self.__hdg
+
+    def get_loc(self):
+        return self.__lat, self.__lon
+
 
 def load_CSV(filename):
     matrix = []
@@ -17,6 +43,17 @@ def load_CSV(filename):
             matrix.append(string_row)
 
     return matrix
+
+
+def init(data):
+    packets = []
+
+    for row in data:
+        point = Packet(row[0], row[7], row[4], row[1], row[2], row[3])
+        
+        packets.append(point)
+
+    return packets
 
 
 if __name__ == '__main__':
