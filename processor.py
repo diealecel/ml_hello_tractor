@@ -82,15 +82,15 @@ def create_packages(packets):
 
 def get_deltas(package):
     last_packet = package[-1] # Last element.
-    distances = []
+    dists = []
 
     for i in xrange(WINDOW_SIZE - 2, -1, -1):
-        curr_distance = vincenty(last_packet.get_loc(),
-                                 package[i].get_loc()).miles
+        curr_dist = vincenty(last_packet.get_loc(), package[i].get_loc()).miles
 
-        distances.append(curr_distance)
+        dists.append(curr_dist)
 
-    return [ distances[i + 1] - distances[i] for i in xrange(len(distances) - 1) ]
+    return [ dists[i + 1] - dists[i] for i in xrange(len(dists) - 1) ]
+
 
 if __name__ == '__main__':
     packages = create_packages(init(load_CSV(FILE_LOC)))
