@@ -1,3 +1,5 @@
+# Added comments.
+
 import csv
 
 def load_CSV(filename):
