@@ -45,12 +45,13 @@ def load_CSV(filename):
     return matrix
 
 
+# Converts all data points into Packet objects.
 def init(data):
     packets = []
 
     for row in data:
         point = Packet(row[0], row[7], row[4], row[1], row[2], row[3])
-        
+
         packets.append(point)
 
     return packets
