@@ -1,5 +1,6 @@
 import csv
 from collections import deque
+from geopy.distance import vincenty
 
 WINDOW_SIZE = 6
 FILE_LOC = ''
@@ -79,5 +80,17 @@ def create_packages(packets):
     return packages
 
 
+def get_deltas(package):
+    last_packet = package[-1] # Last element.
+    distances = []
+
+    for i in xrange(WINDOW_SIZE - 2, -1, -1):
+        curr_distance = vincenty(last_packet.get_loc(),
+                                 package[i].get_loc()).miles
+
+        distances.append(curr_distance)
+
+    return [ distances[i + 1] - distances[i] for i in xrange(len(distances) - 1) ]
+
 if __name__ == '__main__':
-    packets = init(load_CSV(FILE_LOC))
+    packages = create_packages(init(load_CSV(FILE_LOC)))
