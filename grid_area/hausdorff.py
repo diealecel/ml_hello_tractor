@@ -14,7 +14,7 @@ PROJECTION = 'utm'
 GRANULARITY = 500
 
 # CONSTANTS
-METER_TO_HECTARE_CONV = .00001
+METERSQ_TO_HECTARE_CONV = .00001
 
 
 def print_progress(iteration, total, prefix = '', suffix = '', decimals = 2, bar_length = 100):
@@ -355,8 +355,19 @@ class Grid:
         length = vincenty(p_bl, p_tl).meters
         width = vincenty(p_bl, p_br).meters
 
-        return length * width * self.__area * METER_TO_HECTARE_CONV
+        return length * width * self.__area * METERSQ_TO_HECTARE_CONV
 
+    def get_bin_repr(self):
+        bin_repr = []
+
+        for r in xrange(len(self.__grid)):
+            for c in xrange(len(self.__grid[r])):
+                if self.__grid[r][c].used():
+                    bin_repr.append(1)
+                else:
+                    bin_repr.append(0)
+
+        return bin_repr
 
 
 def create_grid(cluster):
@@ -384,6 +395,7 @@ if __name__ == '__main__':
     for cluster in clusters:
         grid = create_grid(cluster)
         print grid.get_area()
+        print grid.get_bin_repr()
         #grid.print_grid()
 
 
