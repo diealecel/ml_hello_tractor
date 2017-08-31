@@ -1,14 +1,20 @@
 # -*- coding: utf-8 -*-
 
 import csv, sys
+from geopy.distance import vincenty
 from pyproj import Proj
 from numpy import linspace
+
+import matplotlib.pyplot as plt
 
 FILE_LOC = 'test_data.csv'
 PROJECTION = 'utm'
 
 # Using Hausdorff method
 GRANULARITY = 500
+
+# CONSTANTS
+METER_TO_HECTARE_CONV = .00001
 
 
 def print_progress(iteration, total, prefix = '', suffix = '', decimals = 2, bar_length = 100):
@@ -232,7 +238,8 @@ class Cell:
 
 class Grid:
     def __init__(self, x_min, x_max, y_min, y_max):
-        self.__used_cells = None
+        self.__limits = x_min, x_max, y_min, y_max
+        self.__used_cells = self.__area = None
 
         rows = list(linspace(y_min, y_max, GRANULARITY))
         cols = list(linspace(x_min, x_max, GRANULARITY))
@@ -306,26 +313,60 @@ class Grid:
                                self.__total_cells,
                                'Completing grid...')
 
+            # Skips rows with only one used cell
             if not min_index or not max_index:
                 continue
 
             for c in xrange(len(self.__grid[r])):
                 if c >= min_index and c <= max_index:
+                    self.__grid[r][c].set_used(True)
                     self.__used_cells += 1
 
-        print float(self.__used_cells) / self.__total_cells
+        self.__area = float(self.__used_cells) / self.__total_cells
+
+    def print_grid(self):
+        for r in xrange(len(self.__grid)):
+            row = ''
+
+            for c in xrange(len(self.__grid[r])):
+                if self.__grid[r][c].used():
+                    row += '█'
+                else:
+                    row += ' '
+
+            print row
+
+    def get_area(self):
+        if not self.__area:
+            return 'Grid not fully initalized.'
+
+        converter = Proj(proj = PROJECTION)
+
+        # p_bl is bottom-left point of a quadrilateral
+        # p_tl is top-left
+        # p_br is bottom-right
+
+        x_min, x_max, y_min, y_max = self.__limits
+
+        p_bl = converter(x_min, y_min, inverse = True)
+        p_tl = converter(x_min, y_max, inverse = True)
+        p_br = converter(x_max, y_min, inverse = True)
+
+        length = vincenty(p_bl, p_tl).meters
+        width = vincenty(p_bl, p_br).meters
+
+        return length * width * self.__area * METER_TO_HECTARE_CONV
 
 
 
-
-
-def find_area(cluster):
+def create_grid(cluster):
     x_min, x_max, y_min, y_max = get_min_max(cluster)
 
     grid = Grid(x_min, x_max, y_min, y_max)
     grid.load_grid(cluster)
     grid.complete_grid()
 
+    return grid
 
 
 if __name__ == '__main__':
@@ -341,4 +382,44 @@ if __name__ == '__main__':
     find_xy(clusters)
 
     for cluster in clusters:
-        find_area(cluster)
+        grid = create_grid(cluster)
+        print grid.get_area()
+        #grid.print_grid()
+
+
+"""
+    # Testing values below.
+
+    results = []
+
+    for setting in xrange(10, 510, 10):
+        print '\nTesting granularity of', setting
+        GRANULARITY = setting
+
+        areas = []
+
+        for cluster in clusters:
+            grid = create_grid(cluster)
+            print grid.get_area()
+
+            areas.append(grid.get_area())
+
+        results.append( (GRANULARITY, areas) )
+
+    for i in xrange(len(results[1])):
+        area = []
+        granul = []
+
+        for result in results:
+            area.append(result[1][i])
+            granul.append(result[0])
+
+        plt.plot(granul, area)
+
+    plt.show()
+"""
+
+"""
+    for cluster in clusters:
+        create_grid(cluster)
+"""
